@@ -1,4 +1,4 @@
-(ns deathbed.viterbi2
+(ns com.lemonodor.viterbi
   (:use [clojure.pprint]))
 
 

@@ -1,6 +1,6 @@
-(ns deathbed.viterbi2-test
+(ns com.lemonodor.viterbi-test
   (:require [clojure.test :refer :all]
-            [deathbed.viterbi2 :as viterbi]))
+            [com.lemonodor.viterbi :as viterbi]))
 
 (def example-hmm
   (viterbi/make-hmm
