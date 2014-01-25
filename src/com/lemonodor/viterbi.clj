@@ -35,13 +35,13 @@
 
 
 (defn best-candidate [candidates]
-  (max-key #(% 0) candidates))
+  (apply max-key #(% 0) candidates))
 
 
 (defn run-step [hmm prev-v path t]
   (let [{:keys [obs states trans-p emit-p]} hmm]
     (map (fn [y]
-           (let [candidates (candidates-for-state hmm prev-v y)
+           (let [candidates (candidates-for-state hmm prev-v t y)
                  [prob state] (best-candidate candidates)]
              [[y prob]
               [y (conj (path state) y)]]))

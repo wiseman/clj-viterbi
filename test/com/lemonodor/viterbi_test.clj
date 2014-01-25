@@ -25,4 +25,12 @@
     (let [[path v] (viterbi/initialize example-hmm)]
       (println path)
       (println v)
-      (println (viterbi/candidates-for-state example-hmm v 1 :healthy)))))
+      (let [candidates (viterbi/candidates-for-state example-hmm v 1 :healthy)]
+        (println candidates)
+        (println (viterbi/best-candidate candidates))))))
+
+(deftest step-test
+  (testing "stepping algorithm"
+    (let [[path v] (viterbi/initialize example-hmm)]
+      (let [step (viterbi/run-step example-hmm v path 1)]
+        (println "step" step)))))
