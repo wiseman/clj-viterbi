@@ -44,7 +44,7 @@
 (defn run-step [hmm prev-v path t]
   ;;(println "prev-v:" prev-v)
   (let [{:keys [obs states trans-p emit-p]} hmm
-        updates (map (fn [y]
+        updates (pmap (fn [y]
                        (let [candidates (candidates-for-state hmm prev-v t y)
                              [prob state] (best-candidate candidates)]
                          ;;(println
