@@ -42,14 +42,14 @@
 
 
 (defn run-step [hmm prev-v path t]
-  (println "prev-v:" prev-v)
+  ;;(println "prev-v:" prev-v)
   (let [{:keys [obs states trans-p emit-p]} hmm
         updates (map (fn [y]
                        (let [candidates (candidates-for-state hmm prev-v t y)
                              [prob state] (best-candidate candidates)]
-                         (println
-                          (str "  candidates for state " y ": " (apply list candidates)))
-                         (println "  best candidate:" [prob state])
+                         ;;(println
+                         ;; (str "  candidates for state " y ": " (apply list candidates)))
+                         ;;(println "  best candidate:" [prob state])
                          [
                           ;; Map entry V[y] -> prob
                           [y prob]
@@ -78,10 +78,10 @@
 
 (defn viterbi [hmm]
   (let [[path vc] (initialize hmm)
-        _ (do
-            (println "----")
-            (println (str "T=" 0))
-            (print-dptable [vc]))
+        ;; _ (do
+        ;;     (println "----")
+        ;;     (println (str "T=" 0))
+        ;;     (print-dptable [vc]))
         [v path]
         (loop [path path
                v [vc]
@@ -89,11 +89,11 @@
           (if (= t (count (:obs hmm)))
             [v path]
             (do
-              (println "----")
-              (println (str "T=" t))
+              ;;(println "----")
+              ;;(println (str "T=" t))
               (let [[vc path] (run-step hmm (last v) path t)]
-                (println "  path" path)
-                (print-dptable (conj v vc))
+                ;;(println "  path" path)
+                ;;(print-dptable (conj v vc))
                 (recur path (conj v vc) (+ t 1))))))]
         (let [[prob state] (apply max-key #(% 0) (for [y (:states hmm)]
                                                [((v (- (count (:obs hmm)) 1)) y)

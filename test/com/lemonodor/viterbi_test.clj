@@ -1,6 +1,14 @@
 (ns com.lemonodor.viterbi-test
   (:require [clojure.test :refer :all]
+            [clojure.math.numeric-tower :as math]
             [com.lemonodor.viterbi :as viterbi]))
+
+
+(def epsilon 0.00001)
+
+(defn nearly= [a b]
+  (< (math/abs (- a b)) epsilon))
+
 
 (def example-hmm
   (viterbi/make-hmm
@@ -14,36 +22,34 @@
                     :fever {:normal 0.1, :cold 0.3, :dizzy 0.6}}]
              #((t %1) %2))))
 
+
 (deftest hmm-test
   (testing "HMM representation"
     (is (= ((:emit-p example-hmm) :fever :cold) 0.3))
     (is (= ((:trans-p example-hmm) :healthy :healthy) 0.7))
     (is (= ((:start-p example-hmm) :fever) 0.4))))
 
-;; (deftest initialization-test
-;;   (testing "table initialization"
-;;     (let [[path v] (viterbi/initialize example-hmm)]
-;;       (let [candidates (viterbi/candidates-for-state example-hmm v 1 :healthy)]
-;;         (println candidates)
-;;         (println (viterbi/best-candidate candidates))))))
 
-(deftest step-test
-  (testing "stepping algorithm"
-    (println (viterbi/viterbi example-hmm))))
+(deftest viterbi-test
+  (testing "Viterbi test"
+    (let [[prob path] (viterbi/viterbi example-hmm)]
+      (is (= path [:healthy :healthy :fever]))
+      (is (nearly= prob 0.01512)))))
 
 
-(defn randoms-summing-to [n sum]
-  (let [vals (map (fn [_] (rand-int 100))
-                  (range n))
-        vals-sum (* sum (reduce + vals))]
-    (map #(/ % vals-sum) vals)))
 
-(defn cartesian-product [colls]
-  (if (empty? colls)
-    '(())
-    (for [x (first colls)
-          more (cartesian-product (rest colls))]
-      (cons x more))))
+;; (defn randoms-summing-to [n sum]
+;;   (let [vals (map (fn [_] (rand-int 100))
+;;                   (range n))
+;;         vals-sum (* sum (reduce + vals))]
+;;     (map #(/ % vals-sum) vals)))
+
+;; (defn cartesian-product [colls]
+;;   (if (empty? colls)
+;;     '(())
+;;     (for [x (first colls)
+;;           more (cartesian-product (rest colls))]
+;;       (cons x more))))
 
 ;; (deftest speed-test
 ;;   (testing "speed"
