@@ -1,5 +1,6 @@
 (ns com.lemonodor.viterbi
-  (:use [clojure.pprint]))
+  (:use [clojure.pprint]
+        [clojure.string :as string]))
 
 
 (defn indexed [s]
@@ -26,12 +27,14 @@
 
 (defn candidates-for-state [hmm v t y]
   (let [{:keys [obs states trans-p emit-p]} hmm]
-    (map (fn [[i y0]]
-           [(+ (v y0)
-               (Math/log10 (trans-p y0 y))
-               (Math/log10 (emit-p y (obs t))))
-            y0])
-         (indexed states))))
+    (let [candidates
+          (map (fn [[i y0]]
+                 [(+ (v y0)
+                     (Math/log10 (trans-p y0 y))
+                     (Math/log10 (emit-p y (obs t))))
+                  y0])
+               (indexed states))]
+      candidates)))
 
 
 (defn best-candidate [candidates]
@@ -39,13 +42,64 @@
 
 
 (defn run-step [hmm prev-v path t]
-  (let [{:keys [obs states trans-p emit-p]} hmm]
-    (map (fn [y]
-           (let [candidates (candidates-for-state hmm prev-v t y)
-                 [prob state] (best-candidate candidates)]
-             [[y prob]
-              [y (conj (path state) y)]]))
-         states)))
+  (println "prev-v:" prev-v)
+  (let [{:keys [obs states trans-p emit-p]} hmm
+        updates (map (fn [y]
+                       (let [candidates (candidates-for-state hmm prev-v t y)
+                             [prob state] (best-candidate candidates)]
+                         (println
+                          (str "  candidates for state " y ": " (apply list candidates)))
+                         (println "  best candidate:" [prob state])
+                         [
+                          ;; Map entry V[y] -> prob
+                          [y prob]
+                          ;; Map entry newpath[y] -> path[state] + [y]
+                          [y (conj (path state) y)]]))
+                     states)]
+    [(into {} (map first updates))
+     (into {} (map second updates))]))
+
+
+(defn print-dptable [v]
+  (let [s (str "    "
+               (string/join " "
+                            (for [i (range (count v))] (format "%12d" i)))
+               "\n")]
+    (println
+     (reduce (fn [s y]
+               (str s
+                    (format "%-10s" y)
+                    (string/join " "
+                                 (for [vc v] (format "%.7s" (format "%f" (vc y)))))
+                    "\n"))
+             s
+             (keys (v 0))))))
+
+
+(defn viterbi [hmm]
+  (let [[path vc] (initialize hmm)
+        _ (do
+            (println "----")
+            (println (str "T=" 0))
+            (print-dptable [vc]))
+        [v path]
+        (loop [path path
+               v [vc]
+               t 1]
+          (if (= t (count (:obs hmm)))
+            [v path]
+            (do
+              (println "----")
+              (println (str "T=" t))
+              (let [[vc path] (run-step hmm (last v) path t)]
+                (println "  path" path)
+                (print-dptable (conj v vc))
+                (recur path (conj v vc) (+ t 1))))))]
+        (let [[prob state] (apply max-key #(% 0) (for [y (:states hmm)]
+                                               [((v (- (count (:obs hmm)) 1)) y)
+                                                y]))]
+      [(Math/pow 10.0 prob) (path state)])))
+
 
 (defn argmax [coll]
   (loop [s (indexed coll)
