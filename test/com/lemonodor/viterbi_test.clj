@@ -13,7 +13,6 @@
 (def example-hmm
   (viterbi/make-hmm
    :states [:healthy :fever]
-   :obs [:normal :cold :dizzy]
    :start-p {:healthy 0.6, :fever 0.4}
    :trans-p (let [t {:healthy {:healthy 0.7, :fever 0.3},
                      :fever {:healthy 0.4, :fever 0.6}}]
@@ -32,7 +31,7 @@
 
 (deftest viterbi-test
   (testing "Viterbi test"
-    (let [[prob path] (viterbi/viterbi example-hmm)]
+    (let [[prob path] (viterbi/viterbi example-hmm [:normal :cold :dizzy])]
       (is (= path [:healthy :healthy :fever]))
       (is (nearly= prob 0.01512)))))
 

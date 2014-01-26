@@ -7,16 +7,15 @@
   (map vector (iterate inc 0) s))
 
 
-(defn make-hmm [& {:keys [obs states start-p emit-p trans-p]}]
-  {:obs obs
-   :states states
+(defn make-hmm [& {:keys [states start-p emit-p trans-p]}]
+  {:states states
    :start-p start-p
    :emit-p emit-p
    :trans-p trans-p})
 
 
-(defn initialize [hmm]
-  (let [{:keys [obs states start-p emit-p]} hmm
+(defn initialize [hmm obs]
+  (let [{:keys [states start-p emit-p]} hmm
         path (into {} (for [y states] [y [y]]))
         v (into {} (for [y states]
                      [y
@@ -25,8 +24,8 @@
     [path v]))
 
 
-(defn candidates-for-state [hmm v t y]
-  (let [{:keys [obs states trans-p emit-p]} hmm]
+(defn candidates-for-state [hmm obs v t y]
+  (let [{:keys [states trans-p emit-p]} hmm]
     (let [candidates
           (map (fn [[i y0]]
                  [(+ (v y0)
@@ -41,11 +40,11 @@
   (apply max-key #(% 0) candidates))
 
 
-(defn run-step [hmm prev-v path t]
+(defn run-step [hmm obs prev-v path t]
   ;;(println "prev-v:" prev-v)
-  (let [{:keys [obs states trans-p emit-p]} hmm
+  (let [{:keys [states trans-p emit-p]} hmm
         updates (pmap (fn [y]
-                       (let [candidates (candidates-for-state hmm prev-v t y)
+                       (let [candidates (candidates-for-state hmm obs prev-v t y)
                              [prob state] (best-candidate candidates)]
                          ;;(println
                          ;; (str "  candidates for state " y ": " (apply list candidates)))
@@ -76,8 +75,8 @@
              (keys (v 0))))))
 
 
-(defn viterbi [hmm]
-  (let [[path vc] (initialize hmm)
+(defn viterbi [hmm obs]
+  (let [[path vc] (initialize hmm obs)
         ;; _ (do
         ;;     (println "----")
         ;;     (println (str "T=" 0))
@@ -86,18 +85,18 @@
         (loop [path path
                v [vc]
                t 1]
-          (if (= t (count (:obs hmm)))
+          (if (= t (count obs))
             [v path]
             (do
               ;;(println "----")
               ;;(println (str "T=" t))
-              (let [[vc path] (run-step hmm (last v) path t)]
+              (let [[vc path] (run-step hmm obs (last v) path t)]
                 ;;(println "  path" path)
                 ;;(print-dptable (conj v vc))
                 (recur path (conj v vc) (+ t 1))))))]
         (let [[prob state] (apply max-key #(% 0) (for [y (:states hmm)]
-                                               [((v (- (count (:obs hmm)) 1)) y)
-                                                y]))]
+                                                   [((v (- (count obs) 1)) y)
+                                                    y]))]
       [(Math/pow 10.0 prob) (path state)])))
 
 
