@@ -35,46 +35,66 @@
       (is (= path [:healthy :healthy :fever]))
       (is (nearly= prob 0.01512)))))
 
+(deftest viterbi-pc-test
+  (testing "Viterbi pre-calc test"
+    (let [[prob path] (viterbi/viterbi-pc example-hmm [:normal :cold :dizzy])]
+      (is (= path [:healthy :healthy :fever]))
+      (is (nearly= prob 0.01512)))))
 
 
-;; (defn randoms-summing-to [n sum]
-;;   (let [vals (map (fn [_] (rand-int 100))
-;;                   (range n))
-;;         vals-sum (* sum (reduce + vals))]
-;;     (map #(/ % vals-sum) vals)))
+(deftest array-test
+  (testing "Java array"
+    (let [probs (make-array Double/TYPE 1000 1000)]
+      (time
+       (dotimes [i 1000]
+         (let [#^doubles a (aget #^objects probs i)]
+           (dotimes [j 1000]
+             (aset #^doubles a j 1.0)))))
+      (time
+       (dotimes [i 1000]
+         (dotimes [j 1000]
+           (let [#^doubles a (aget #^objects probs i)] (aget a j))))))))
 
-;; (defn cartesian-product [colls]
-;;   (if (empty? colls)
-;;     '(())
-;;     (for [x (first colls)
-;;           more (cartesian-product (rest colls))]
-;;       (cons x more))))
 
-;; (deftest speed-test
-;;   (testing "speed"
-;;     (let [words (map #(str (char (+ 65 (mod % 26))) "WOO") (range 2000))
-;;           start-probs (into {}
-;;                             (map (fn [w p] [w p])
-;;                                  words
-;;                                  (randoms-summing-to (count words) 1.0)))
-;;           bigrams (cartesian-product words)
-;;           trans-probs (into {}
-;;                             (map (fn [w1]
-;;                                    [w1
-;;                                     (into {}
-;;                                           (map (fn [w2 p]
-;;                                                  [w2 p])
-;;                                                words
-;;                                                (randoms-summing-to (count words) 1.0)))])
-;;                                  words))
-;;           hmm (viterbi/make-hmm
-;;                :states words
-;;                :obs [\A \B \C \D \D \E \F \G]
-;;                :start-p start-probs
-;;                :trans-p #((trans-probs %1) %2)
-;;                :emit-p (fn [s o]
-;;                          (if (= (first s) o)
-;;                            0.999
-;;                            0.001)))]
-;;       (println "\n----------------------------------------REALLY DOING IT\n")
-;;       (println (viterbi/viterbi hmm)))))
+
+(defn randoms-summing-to [n sum]
+  (let [vals (map (fn [_] (rand-int 100))
+                  (range n))
+        vals-sum (* sum (reduce + vals))]
+    (map #(/ % vals-sum) vals)))
+
+(defn cartesian-product [colls]
+  (if (empty? colls)
+    '(())
+    (for [x (first colls)
+          more (cartesian-product (rest colls))]
+      (cons x more))))
+
+(deftest speed-test
+    (let [words (map #(str (char (+ 65 (mod % 26))) "WOO") (range 2000))
+          start-probs (into {}
+                            (map (fn [w p] [w p])
+                                 words
+                                 (randoms-summing-to (count words) 1.0)))
+          bigrams (cartesian-product words)
+          trans-probs (into {}
+                            (map (fn [w1]
+                                   [w1
+                                    (into {}
+                                          (map (fn [w2 p]
+                                                 [w2 p])
+                                               words
+                                               (randoms-summing-to (count words) 1.0)))])
+                                 words))
+          hmm (viterbi/make-hmm
+               :states words
+               :start-p start-probs
+               :trans-p #((trans-probs %1) %2)
+               :emit-p (fn [s o]
+                         (if (= (first s) o)
+                           0.999
+                           0.001)))]
+      (testing "non pre-calc"
+        (println (time (viterbi/viterbi hmm [\A \B \C \D \D \E \F \G]))))
+      (testing "pre-calc"
+        (println (time (viterbi/viterbi-pc hmm [\A \B \C \D \D \E \F \G]))))))

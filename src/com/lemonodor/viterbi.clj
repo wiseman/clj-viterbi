@@ -1,5 +1,6 @@
 (ns com.lemonodor.viterbi
   (:require [clojure.pprint :as pprint]
+            [clojure.set :as set]
             [clojure.string :as string]))
 
 
@@ -12,6 +13,22 @@
    :start-p start-p
    :emit-p emit-p
    :trans-p trans-p})
+
+
+(defn print-dptable [v]
+  (let [s (str "    "
+               (string/join " "
+                            (for [i (range (count v))] (format "%12d" i)))
+               "\n")]
+    (println
+     (reduce (fn [s y]
+               (str s
+                    (format "%-10s" y)
+                    (string/join " "
+                                 (for [vc v] (format "%.7s" (format "%f" (vc y)))))
+                    "\n"))
+             s
+             (keys (v 0))))))
 
 
 (defn initialize [hmm obs]
@@ -41,64 +58,130 @@
 
 
 (defn run-step [hmm obs prev-v path t]
-  ;;(println "prev-v:" prev-v)
   (let [{:keys [states trans-p emit-p]} hmm
         obs-t (obs t)
         updates (pmap (fn [y]
-                       (let [candidates (candidates-for-state hmm obs-t prev-v y)
-                             [prob state] (best-candidate candidates)]
-                         ;;(println
-                         ;; (str "  candidates for state " y ": " (apply list candidates)))
-                         ;;(println "  best candidate:" [prob state])
-                         [
-                          ;; Map entry V[y] -> prob
-                          [y prob]
-                          ;; Map entry newpath[y] -> path[state] + [y]
-                          [y (conj (path state) y)]]))
-                     states)]
+                        (let [candidates (candidates-for-state hmm obs-t prev-v y)
+                              [prob state] (best-candidate candidates)]
+                          [
+                           ;; Map entry V[y] -> prob
+                           [y prob]
+                           ;; Map entry newpath[y] -> path[state] + [y]
+                           [y (conj (path state) y)]]))
+                      states)]
     [(into {} (map first updates))
      (into {} (map second updates))]))
 
 
-(defn print-dptable [v]
-  (let [s (str "    "
-               (string/join " "
-                            (for [i (range (count v))] (format "%12d" i)))
-               "\n")]
-    (println
-     (reduce (fn [s y]
-               (str s
-                    (format "%-10s" y)
-                    (string/join " "
-                                 (for [vc v] (format "%.7s" (format "%f" (vc y)))))
-                    "\n"))
-             s
-             (keys (v 0))))))
-
-
 (defn viterbi [hmm obs]
   (let [[path vc] (initialize hmm obs)
-        ;; _ (do
-        ;;     (println "----")
-        ;;     (println (str "T=" 0))
-        ;;     (print-dptable [vc]))
-        [v path]
-        (loop [path path
-               v [vc]
-               t 1]
-          (if (= t (count obs))
-            [v path]
-            (do
-              ;;(println "----")
-              ;;(println (str "T=" t))
-              (let [[vc path] (run-step hmm obs (last v) path t)]
-                ;;(println "  path" path)
-                ;;(print-dptable (conj v vc))
-                (recur path (conj v vc) (+ t 1))))))]
-        (let [[prob state] (apply max-key #(% 0) (for [y (:states hmm)]
-                                                   [((v (- (count obs) 1)) y)
-                                                    y]))]
+        [v path] (loop [path path
+                        v [vc]
+                        t 1]
+                   (if (= t (count obs))
+                     [v path]
+                     (let [[vc path] (run-step hmm obs (last v) path t)]
+                       (recur path (conj v vc) (+ t 1)))))]
+    (let [[prob state] (apply max-key #(% 0) (for [y (:states hmm)]
+                                               [((v (- (count obs) 1)) y)
+                                                y]))]
       [(Math/pow 10.0 prob) (path state)])))
+
+
+(defn array? [x] (-> x class .isArray))
+(defn see [x] (if (array? x) (map see x) x))
+
+(defn initialize-pc [hmm obs]
+  (let [{:keys [num-states start-p emit-p]} hmm
+        path (into {} (for [y (range num-states)] [y [y]]))
+        v (into {} (for [y (range num-states)]
+                     [y
+                      (+ (aget ^doubles start-p y)
+                         (aget ^doubles (aget ^objects emit-p y) (first obs)))]))]
+    [path v]))
+
+
+(defn candidates-for-state-pc [hmm obs-t v y]
+  (let [{:keys [num-states trans-p emit-p]} hmm]
+    (let [candidates
+          (map (fn [y0]
+                 [(+ (v y0)
+                     (aget ^doubles (aget ^objects trans-p y0) y)
+                     (aget ^doubles (aget ^objects emit-p y) obs-t))
+                  y0])
+               (range num-states))]
+      candidates)))
+
+(defn run-step-pc [hmm obs prev-v path t]
+  (let [{:keys [num-states]} hmm
+        obs-t (nth obs t)
+        updates (pmap (fn [y]
+                        (let [candidates (candidates-for-state-pc hmm obs-t prev-v y)
+                              [prob state] (best-candidate candidates)]
+                          [
+                           ;; Map entry V[y] -> prob
+                           [y prob]
+                           ;; Map entry newpath[y] -> path[state] + [y]
+                           [y (conj (path state) y)]]))
+                      (range num-states))]
+    [(into {} (map first updates))
+     (into {} (map second updates))]))
+
+
+(defn viterbi-pc [hmm obs]
+  (let [{:keys [states start-p trans-p emit-p]} hmm
+        ;; State -> index
+        state-index-map (into {} (map (fn [s i] [s i])
+                                      states
+                                      (range)))
+        index-state-map (set/map-invert state-index-map)
+        ;; Observation -> index
+        obs-index-map (into {} (map (fn [o i] [o i])
+                                    (distinct obs)
+                                    (range)))
+        index-obs-map (set/map-invert obs-index-map)
+        num-states (count states)
+        num-distinct-obs (count obs-index-map)
+        hmm-pc {:num-states num-states
+                :num-distinct-obs num-distinct-obs
+                :start-p
+                (let [probs (make-array Double/TYPE num-states)]
+                  (doseq [[state i] state-index-map]
+                    (aset ^doubles probs i ^double (Math/log10 (start-p state))))
+                  probs)
+                :emit-p
+                (let [probs (make-array Double/TYPE num-states num-distinct-obs)]
+                  (doseq [[state i] state-index-map]
+                    (let [#^doubles row (aget #^objects probs i)]
+                      (doseq [[obs j] obs-index-map]
+                        (aset ^doubles row j
+                              ^double (Math/log10 (emit-p state obs))))))
+                  probs)
+                :trans-p
+                (let [probs (make-array Double/TYPE num-states num-states)]
+                  (doseq [[state-i i] state-index-map]
+                    (let [#^doubles row (aget #^objects probs i)]
+                      (doseq [[state-j j] state-index-map]
+                        (aset ^doubles row j
+                              ^double (Math/log10 (trans-p state-i state-j))))))
+                  probs)}
+        obs-i (map obs-index-map obs)
+        [path vc] (initialize-pc hmm-pc obs-i)
+        _ (do (println hmm-pc)
+              (println obs-i)
+              (println path)
+              (println vc))
+        [v path] (loop [path path
+                        v [vc]
+                        t 1]
+                   (if (= t (count obs))
+                     [v path]
+                     (let [[vc path] (run-step-pc hmm-pc obs-i (last v) path t)]
+                       (recur path (conj v vc) (+ t 1)))))]
+    (let [[prob state] (apply max-key #(% 0) (for [y (range num-states)]
+                                               [((v (- (count obs) 1)) y)
+                                                y]))]
+      [(Math/pow 10.0 prob) (map index-state-map (path state))])))
 
 
 (defn argmax [coll]
