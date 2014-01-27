@@ -1,6 +1,6 @@
 (ns com.lemonodor.viterbi
-  (:use [clojure.pprint]
-        [clojure.string :as string]))
+  (:require [clojure.pprint :as pprint]
+            [clojure.string :as string]))
 
 
 (defn indexed [s]
@@ -114,9 +114,9 @@
 
 (defn pprint-hmm [hmm]
   (println "number of states: " (:n hmm) " number of observations:  " (:m hmm))
-  (print "init probabilities: ") (pprint (:init-probs hmm))
-  (print "emission probs: " ) (pprint (:emission-probs hmm))
-  (print "state-transitions: " ) (pprint (:state-transitions hmm)))
+  (print "init probabilities: ") (pprint/pprint (:init-probs hmm))
+  (print "emission probs: " ) (pprint/pprint (:emission-probs hmm))
+  (print "state-transitions: " ) (pprint/pprint (:state-transitions hmm)))
 
 
 (def example-hmm
