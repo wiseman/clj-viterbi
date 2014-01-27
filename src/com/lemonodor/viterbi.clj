@@ -85,7 +85,7 @@
     (let [[prob state] (apply max-key #(% 0) (for [y (:states hmm)]
                                                [((v (- (count obs) 1)) y)
                                                 y]))]
-      [(Math/pow 10.0 prob) (path state)])))
+      [prob (path state)])))
 
 
 (defn array? [x] (-> x class .isArray))
@@ -167,10 +167,6 @@
                   probs)}
         obs-i (map obs-index-map obs)
         [path vc] (initialize-pc hmm-pc obs-i)
-        _ (do (println hmm-pc)
-              (println obs-i)
-              (println path)
-              (println vc))
         [v path] (loop [path path
                         v [vc]
                         t 1]
@@ -181,7 +177,7 @@
     (let [[prob state] (apply max-key #(% 0) (for [y (range num-states)]
                                                [((v (- (count obs) 1)) y)
                                                 y]))]
-      [(Math/pow 10.0 prob) (map index-state-map (path state))])))
+      [prob (map index-state-map (path state))])))
 
 
 (defn argmax [coll]
