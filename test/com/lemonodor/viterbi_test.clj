@@ -10,7 +10,8 @@
   (< (math/abs (- a b)) epsilon))
 
 
-(def example-hmm
+;; From https://en.wikipedia.org/wiki/Viterbi_algorithm#Example
+(def illness-hmm
   (viterbi/make-hmm
    :states [:healthy :fever]
    :start-p {:healthy 0.6, :fever 0.4}
@@ -21,23 +22,38 @@
                     :fever {:normal 0.1, :cold 0.3, :dizzy 0.6}}]
              #((t %1) %2))))
 
+;; From http://homepages.ulb.ac.be/~dgonze/TEACHING/viterbi.pdf
+(def dna-hmm
+  (viterbi/make-hmm
+   :states [:H :L]
+   :start-p {:H 0.5, :L 0.5}
+   :trans-p (let [t {:H {:H 0.5 :L 0.5}
+                     :L {:H 0.4 :L 0.6}}]
+              #((t %1) %2))
+   :emit-p (let [t {:H {\A 0.2 \C 0.3 \G 0.3 \T 0.2}
+                    :L {\A 0.3 \C 0.2 \G 0.2 \T 0.3}}]
+            #((t %1) %2))))
+
 
 (deftest hmm-test
   (testing "HMM representation"
-    (is (= ((:emit-p example-hmm) :fever :cold) 0.3))
-    (is (= ((:trans-p example-hmm) :healthy :healthy) 0.7))
-    (is (= ((:start-p example-hmm) :fever) 0.4))))
+    (is (= ((:emit-p illness-hmm) :fever :cold) 0.3))
+    (is (= ((:trans-p illness-hmm) :healthy :healthy) 0.7))
+    (is (= ((:start-p illness-hmm) :fever) 0.4))))
 
 
 (deftest viterbi-test
   (testing "Viterbi test"
-    (let [[prob path] (viterbi/viterbi example-hmm [:normal :cold :dizzy])]
+    (let [[prob path] (viterbi/viterbi illness-hmm [:normal :cold :dizzy])]
       (is (= path [:healthy :healthy :fever]))
-      (is (nearly= prob -1.8204482088348124)))))
+      (is (nearly= prob -1.8204482088348124)))
+    (let [[prob path] (viterbi/viterbi dna-hmm "GGCACTGAA")]
+      (is (= path [:H :H :H :L :L :L :L :L :L]))
+      (is (= prob -7.371454956372107)))))
 
 (deftest viterbi-pc-test
   (testing "Viterbi pre-calc test"
-    (let [[prob path] (viterbi/viterbi-pc example-hmm [:normal :cold :dizzy])]
+    (let [[prob path] (viterbi/viterbi-pc illness-hmm [:normal :cold :dizzy])]
       (is (= path [:healthy :healthy :fever]))
       (is (nearly= prob -1.8204482088348124)))))
 

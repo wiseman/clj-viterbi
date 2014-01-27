@@ -74,7 +74,8 @@
 
 
 (defn viterbi [hmm obs]
-  (let [[path vc] (initialize hmm obs)
+  (let [obs (vec obs)
+        [path vc] (initialize hmm obs)
         [v path] (loop [path path
                         v [vc]
                         t 1]
@@ -130,6 +131,7 @@
 
 (defn viterbi-pc [hmm obs]
   (let [{:keys [states start-p trans-p emit-p]} hmm
+        obs (vec obs)
         ;; State -> index
         state-index-map (into {} (map (fn [s i] [s i])
                                       states
