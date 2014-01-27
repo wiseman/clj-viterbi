@@ -24,15 +24,15 @@
     [path v]))
 
 
-(defn candidates-for-state [hmm obs v t y]
+(defn candidates-for-state [hmm obs-t v y]
   (let [{:keys [states trans-p emit-p]} hmm]
     (let [candidates
-          (map (fn [[i y0]]
+          (map (fn [y0]
                  [(+ (v y0)
                      (Math/log10 (trans-p y0 y))
-                     (Math/log10 (emit-p y (obs t))))
+                     (Math/log10 (emit-p y obs-t)))
                   y0])
-               (indexed states))]
+               states)]
       candidates)))
 
 
@@ -43,8 +43,9 @@
 (defn run-step [hmm obs prev-v path t]
   ;;(println "prev-v:" prev-v)
   (let [{:keys [states trans-p emit-p]} hmm
+        obs-t (obs t)
         updates (pmap (fn [y]
-                       (let [candidates (candidates-for-state hmm obs prev-v t y)
+                       (let [candidates (candidates-for-state hmm obs-t prev-v y)
                              [prob state] (best-candidate candidates)]
                          ;;(println
                          ;; (str "  candidates for state " y ": " (apply list candidates)))
