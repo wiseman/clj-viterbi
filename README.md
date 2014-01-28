@@ -65,6 +65,6 @@ sequence of observations normal, cold, dizzy:
 ```
 
 The return value is a vector containing the
-log<sub10</sub>-probability of the most likely sequence of states, and
+log<sub>10</sub>-probability of the most likely sequence of states, and
 the most likely sequence of states.  In this case, the most likely
 sequence of states is healthy, healthy, fever.
