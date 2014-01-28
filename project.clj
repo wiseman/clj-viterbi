@@ -1,8 +1,8 @@
-(defproject viterbi "0.1.0-SNAPSHOT"
-  :description "FIXME: write description"
-  :url "http://example.com/FIXME"
-  :license {:name "Eclipse Public License"
-            :url "http://www.eclipse.org/legal/epl-v10.html"}
+(defproject viterbi "0.1.0"
+  :description "Viterbi decoding for Clojure."
+  :url "https://github.com/wiseman/clj-viterbi"
+  :license {:name "MIT License"
+            :url "https://github.com/wiseman/clj-viterbi/blob/master/LICENSE"}
   :dependencies [[org.clojure/clojure "1.5.1"]]
   :target-path "target/%s"
   :global-vars {*warn-on-reflection* true}
