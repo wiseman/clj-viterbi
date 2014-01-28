@@ -61,7 +61,7 @@ sequence of observations normal, cold, dizzy:
 
 ```
 (viterbi/viterbi hmm [:normal :cold :dizzy])
-;; -> [-1.8204482088348124 [:healthy :healthy :fever]
+;; -> [-1.8204482088348124 [:healthy :healthy :fever]]
 ```
 
 The return value is a vector containing the
