@@ -1,4 +1,4 @@
-(defproject viterbi "0.1.0"
+(defproject com.lemonodor.viterbi "0.1.0"
   :description "Viterbi decoding for Clojure."
   :url "https://github.com/wiseman/clj-viterbi"
   :license {:name "MIT License"
