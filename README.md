@@ -31,12 +31,12 @@ chance of being cold, and a 10% chance of being normal.
 
 To define an HMM, you call `make-hmm` with the following keyword arguments:
 
-|Argument| Description                                                                       |
-|--------|-----------------------------------------------------------------------------------|
-|:states | The possible states.                                                              |
-|:start-p| A map from state → starting probability of the state.                            |
-|:trans-p| A function F(_s<sub>1</sub>_, _s<sub>2</sub>_) → probability of transitioning from state _s<sub>1</sub>_ to state _s<sub>2</sub>_. |
-|:emit-p | A function F(_s_, _o_) → probability of emitting observation _o_ from state _s_. |
+|Argument  | Description                                                                       |
+|----------|-----------------------------------------------------------------------------------|
+|`:states` | The possible states.                                                              |
+|`:start-p`| A map from state → starting probability of the state.                            |
+|`:trans-p`| A function F(_s<sub>1</sub>_, _s<sub>2</sub>_) → probability of transitioning from state _s<sub>1</sub>_ to state _s<sub>2</sub>_. |
+|`:emit-p` | A function F(_s_, _o_) → probability of emitting observation _o_ from state _s_. |
 
 For example,
 
