@@ -55,3 +55,16 @@ For example,
                     :fever {:normal 0.1, :cold 0.3, :dizzy 0.6}}]
              #((t %1) %2)))
 ```
+
+Now we can find the sequence of states that is most likely given the
+sequence of observations normal, cold, dizzy:
+
+```
+(viterbi/viterbi hmm [:normal :cold :dizzy])
+;; -> [-1.8204482088348124 [:healthy :healthy :fever]
+```
+
+The return value is a vector containing the
+log<sub10</sub>-probability of the most likely sequence of states, and
+the most likely sequence of states.  In this case, the most likely
+sequence of states is healthy, healthy, fever.
