@@ -11,8 +11,9 @@ model (HMM) that generates a series of observations.
 
 ## Example
 
-Here's an HMM that describes a model of health & sickness, with
-symptoms (taken from https://en.wikipedia.org/wiki/Viterbi_algorithm):
+Here's an HMM that describes a model where a person can be either
+healthy of feverish, and can exhibit symptoms based on their health
+(taken from https://en.wikipedia.org/wiki/Viterbi_algorithm):
 
 ![Screenshot of Mavelous running in a desktop
 browser](https://github.com/wiseman/clj-viterbi/raw/master/doc/example-hmm.png
