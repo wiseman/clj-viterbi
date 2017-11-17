@@ -12,7 +12,7 @@ model (HMM) that generates a series of observations.
 ## Example
 
 Here's an HMM that describes a model where a person can be either
-healthy of feverish, and can exhibit symptoms based on their health
+healthy or feverish, and can exhibit symptoms based on their health
 (taken from https://en.wikipedia.org/wiki/Viterbi_algorithm):
 
 ![Screenshot of Mavelous running in a desktop
