@@ -3,7 +3,7 @@
   :url "https://github.com/wiseman/clj-viterbi"
   :license {:name "MIT License"
             :url "https://github.com/wiseman/clj-viterbi/blob/master/LICENSE"}
-  :dependencies [[org.clojure/clojure "1.5.1"]]
+  :dependencies [[org.clojure/clojure "1.8.0"]]
   :target-path "target/%s"
   :global-vars {*warn-on-reflection* true}
   :profiles {:test
